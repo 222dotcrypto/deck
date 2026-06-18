@@ -124,7 +124,7 @@ pub fn save_image_bytes(b64: String, ext: String) -> Result<String, String> {
         return Err("пустая картинка".into());
     }
     let dir = dirs::cache_dir()
-        .map(|p| p.join("Deck").join("pasted"))
+        .map(|p| p.join("opdeck").join("pasted"))
         .ok_or("нет каталога кэша")?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let ts = SystemTime::now()

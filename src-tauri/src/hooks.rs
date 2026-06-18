@@ -272,7 +272,7 @@ pub fn claude_hooks_path() -> std::path::PathBuf {
     let base = dirs::config_dir()
         .or_else(dirs::home_dir)
         .unwrap_or_else(|| std::path::PathBuf::from("/tmp"));
-    base.join("Deck").join("claude-hooks.json")
+    base.join("opdeck").join("claude-hooks.json")
 }
 
 // Папка с файлами приёмника (hook-port / hook-token) — общая для всех агентов Deck.

@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Deck",
+  "productName": "opdeck",
   "version": "0.1.0",
-  "identifier": "app.deck.desktop",
+  "identifier": "app.opdeck.desktop",
   "build": {
     "frontendDist": "../dist-web",
     "devUrl": "http://localhost:5174",
@@ -13,7 +13,7 @@
     "macOSPrivateApi": true,
     "windows": [
       {
-        "title": "Deck",
+        "title": "opdeck",
         "width": 1440,
         "height": 900,
         "minWidth": 900,

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Deck macOS Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/222dotcrypto/deck/main/install.sh | sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/222dotcrypto/opdeck/main/install.sh | sh
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,8 +12,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REPO="222dotcrypto/deck"
-APP_NAME="Deck"
+REPO="222dotcrypto/opdeck"
+APP_NAME="opdeck"
 INSTALL_PATH="/Applications/${APP_NAME}.app"
 
 # Utility functions

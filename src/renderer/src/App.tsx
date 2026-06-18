@@ -139,7 +139,7 @@ export default function App(): JSX.Element {
   }, [])
 
   if (!loaded) {
-    return <div className="loading">Deck загружается…</div>
+    return <div className="loading">opdeck загружается…</div>
   }
 
   return (

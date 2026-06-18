@@ -15,7 +15,7 @@ function createWindow(): void {
     backgroundColor: '#1a1a1d',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 14, y: 18 },
-    title: 'Deck',
+    title: 'opdeck',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
