@@ -78,6 +78,8 @@ interface State {
   selectedFile?: SelectedFile
   // какой файл открыт в каждом воркспейсе (чтобы превью помнилось при переключении)
   selectedFileByWs: Record<string, SelectedFile | undefined>
+  // открытые вкладки файлов по воркспейсам (ряд вкладок над панелью редактора)
+  openTabsByWs: Record<string, SelectedFile[]>
   // тронутые агентом файлы по воркспейсам (ключ = workspaceId). RFC 0011.
   changedFiles: Record<string, ChangedFile[]>
   // RFC 0013 — последний перенос в основное дерево (для кнопки «Откатить»)
@@ -159,6 +161,7 @@ interface State {
   setStatus: (id: string, status: SessionStatus) => void
   setTab: (t: Tab) => void
   selectFile: (f?: SelectedFile) => void
+  closeTab: (path: string) => void
   refreshChangedFiles: (workspaceId: string) => Promise<void>
   setFocused: (id?: string) => void
   setDragging: (id?: string) => void
@@ -260,6 +263,7 @@ export const useStore = create<State>((set, get) => ({
   fileTreeShowOnlyChanged: false,
   sessionOutputTail: {},
   selectedFileByWs: {},
+  openTabsByWs: {},
   changedFiles: {},
   _unsubscribers: [],
   _refreshingFolders: new Set<string>(),
@@ -717,10 +721,36 @@ export const useStore = create<State>((set, get) => ({
   setTab: (t) => set({ tab: t }),
   selectFile: (f) => {
     const wsId = get().activeWorkspaceId
-    set((s) => ({
-      selectedFile: f,
-      selectedFileByWs: wsId ? { ...s.selectedFileByWs, [wsId]: f } : s.selectedFileByWs
-    }))
+    set((s) => {
+      if (!wsId) return { selectedFile: f }
+      // открытие файла = добавить вкладку (дедуп по пути) и сделать её активной.
+      let tabs = s.openTabsByWs[wsId] ?? []
+      if (f) {
+        tabs = tabs.some((t) => t.path === f.path)
+          ? tabs.map((t) => (t.path === f.path ? f : t)) // обновить (напр. diff-флаг)
+          : [...tabs, f]
+      }
+      return {
+        selectedFile: f,
+        selectedFileByWs: { ...s.selectedFileByWs, [wsId]: f },
+        openTabsByWs: { ...s.openTabsByWs, [wsId]: tabs }
+      }
+    })
+  },
+  closeTab: (path) => {
+    const wsId = get().activeWorkspaceId
+    if (!wsId) return
+    set((s) => {
+      const tabs = (s.openTabsByWs[wsId] ?? []).filter((t) => t.path !== path)
+      // если закрыли активную вкладку — активной становится последняя оставшаяся (или ничего)
+      const active =
+        s.selectedFile?.path === path ? (tabs.length ? tabs[tabs.length - 1] : undefined) : s.selectedFile
+      return {
+        openTabsByWs: { ...s.openTabsByWs, [wsId]: tabs },
+        selectedFile: active,
+        selectedFileByWs: { ...s.selectedFileByWs, [wsId]: active }
+      }
+    })
   },
 
   // RFC 0011: перечитать список тронутых агентом файлов воркспейса (git status

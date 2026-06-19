@@ -403,7 +403,19 @@ input[type="checkbox"]:checked::after {
 .changes-path { color: var(--text-3); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
 
 .rp-editor { min-height: 0; display: flex; flex-direction: column; }
-.editor-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; padding-top: 44px; }
+.editor-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+/* тело панели: плавающий островок (top:8px) + содержимое; padding сверху — клиренс под островок */
+.editor-body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; padding-top: 44px; }
+/* ряд вкладок открытых файлов — над телом панели */
+.editor-tabs { flex: 0 0 auto; display: flex; gap: 2px; align-items: stretch; overflow-x: auto;
+  background: var(--bg-2); border-bottom: 1px solid var(--line); padding: 4px 6px 0; }
+.etab { display: flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 7px 7px 0 0;
+  font-size: 11.5px; color: var(--text-3); white-space: nowrap; border: 1px solid transparent; border-bottom: none; }
+.etab:hover { color: var(--text-2); background: var(--bg-3); }
+.etab.active { color: var(--text); background: var(--bg); border-color: var(--line); }
+.etab-name { max-width: 170px; overflow: hidden; text-overflow: ellipsis; }
+.etab-x { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 4px; font-size: 10px; line-height: 1; color: var(--text-3); }
+.etab-x:hover { background: var(--bg-3); color: var(--text); }
 /* плавающая панель-островок по центру сверху (как «челка»): переключение видов + кнопки */
 .editor-island {
   position: absolute; top: 8px; left: 50%; transform: translateX(-50%); z-index: 25;

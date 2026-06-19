@@ -188,6 +188,10 @@ export default function EditorPane({
 }): JSX.Element {
   const file = useStore((s) => s.selectedFile)
   const selectFile = useStore((s) => s.selectFile)
+  // ВАЖНО: дефолт [] ВНЕ селектора — иначе селектор отдаёт новый массив каждый рендер,
+  // zustand сравнивает по ссылке → бесконечный ре-рендер (React #185).
+  const openTabs = useStore((s) => s.openTabsByWs[s.activeWorkspaceId ?? '']) ?? []
+  const closeTab = useStore((s) => s.closeTab)
   const pushToast = useStore((s) => s.pushToast)
   // Папка, относительно которой строим путь файла для git.diffFile (RFC 0011).
   // RFC 0013 Фаза 0: для фокус-сессии-клона — её рабочая копия (своя ветка), иначе
@@ -264,11 +268,14 @@ export default function EditorPane({
   }
 
   const closeFile = (): void => {
-    selectFile(undefined)
+    const f = fileRef.current
     setMode('code')
     setBrowserSrc('')
     setBrowserDoc('')
     setBrowserInput('')
+    // закрываем активную вкладку (если открыта) — стор сам активирует соседнюю
+    if (f) closeTab(f.path)
+    else selectFile(undefined)
   }
 
   // RFC 0011: перечитать пару «было → стало» с диска (актуальное «стало»). Зовём при
@@ -456,6 +463,32 @@ export default function EditorPane({
 
   return (
     <div className="editor-wrap">
+      {/* Ряд вкладок открытых файлов (RFC мульти-вкладок) — над панелью; кнопки режимов остаются ниже. */}
+      {openTabs.length > 0 && (
+        <div className="editor-tabs">
+          {openTabs.map((t) => (
+            <div
+              key={t.path}
+              className={`etab${file?.path === t.path ? ' active' : ''}`}
+              title={t.path}
+              onClick={() => selectFile(t)}
+            >
+              <span className="etab-name">{t.name}</span>
+              <button
+                className="etab-x"
+                title="Закрыть вкладку"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  closeTab(t.path)
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="editor-body">
       {/* Плавающая панель сверху по центру — всегда на месте (можно уйти в Браузер без файла). */}
       <div className="editor-island">
         <div className="mode-toggle">
@@ -679,6 +712,7 @@ export default function EditorPane({
           </div>
         </>
       )}
+      </div>
     </div>
   )
 }
