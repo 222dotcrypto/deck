@@ -236,8 +236,26 @@ pub fn mime_for(path: &str) -> &'static str {
 // H7 (аудит 2026-06-17): cwd ОБЯЗАН быть внутри разрешённых корней (папки воркспейсов + cwd
 // сессий). Иначе вернуть исходную ссылку как есть — НЕ запускаем рекурсивный поиск по чужим
 // деревьям (напр. cwd="/etc" + reference="passwd"). path_allowed fail-open пока roots пуст.
+// Раскрытие `~`/`~/` в домашнюю папку ($HOME). Клик по `~/path` из терминала иначе ломался:
+// регулярка отдавала путь от корня диска («/Documents/…»), такого файла нет → не открывалось.
+fn expand_tilde(p: &str) -> String {
+    if p == "~" {
+        return std::env::var("HOME").unwrap_or_else(|_| p.to_string());
+    }
+    match p.strip_prefix("~/") {
+        Some(rest) => match std::env::var("HOME") {
+            Ok(home) => format!("{}/{}", home.trim_end_matches('/'), rest),
+            Err(_) => p.to_string(),
+        },
+        None => p.to_string(),
+    }
+}
+
 #[tauri::command]
 pub fn fs_resolve(cwd: String, reference: String) -> String {
+    // `~`/`~/` → $HOME до всего остального: даже если cwd вне разрешённых корней, абсолютный
+    // путь, который реально существует на диске, всё равно должен открыться по клику.
+    let reference = expand_tilde(&reference);
     if !path_allowed(&cwd) {
         return reference;
     }

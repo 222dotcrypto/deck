@@ -170,7 +170,9 @@ function TerminalPane({
       const path = await window.api.fs.resolve(session.cwd, rel)
       useStore.getState().selectFile({ path, name })
     }
-    const PATH_RE = /(?:\.{0,2}\/)?[\w.\-]+(?:\/[\w.\-]+)*\.[A-Za-z][\w]{0,9}(?::\d+)*/g
+    // `~/...` (домашняя папка) тоже кликабельно: без этого `~` выпадал из ссылки, путь
+    // превращался в «/Documents/…» (от корня диска) и не открывался. Раскрытие `~` — в ядре.
+    const PATH_RE = /(?:~\/|\.{0,2}\/)?[\w.\-]+(?:\/[\w.\-]+)*\.[A-Za-z][\w]{0,9}(?::\d+)*/g
     const linkDisp = term.registerLinkProvider({
       provideLinks(lineNum, callback) {
         try {
@@ -359,13 +361,23 @@ function TerminalPane({
     }
     containerEl.addEventListener('paste', onPaste, true)
 
-    const ro = new ResizeObserver(() => safeFit())
+    // Дебаунс ресайза: при тяге ширины / развороте на весь экран ResizeObserver сыплет
+    // десятками тиков. Без дебаунса каждый тик звал fit()+pty.resize → шквал SIGWINCH,
+    // оболочка перерисовывала строку на каждой промежуточной ширине, а xterm одновременно
+    // делал рефлоу скроллбэка → текст «ломался и повторялся». Теперь подгоняем ОДИН раз,
+    // через ~110мс после последнего тика, когда размер устаканился.
+    let fitDebounce = 0
+    const ro = new ResizeObserver(() => {
+      if (fitDebounce) clearTimeout(fitDebounce)
+      fitDebounce = window.setTimeout(safeFit, 110)
+    })
     ro.observe(containerRef.current)
 
     return () => {
       cancelAnimationFrame(raf)
       if (flushRaf) cancelAnimationFrame(flushRaf)
       off()
+      if (fitDebounce) clearTimeout(fitDebounce)
       ro.disconnect()
       containerEl.removeEventListener('paste', onPaste, true)
       linkDisp.dispose()
